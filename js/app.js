@@ -1,8 +1,9 @@
 //app.js
+
 Vue.component('movie-item', {
   props: ['movie'],
   template: '<div class="col-sm-4 col-xs-12"><div class="card" style="width: 18rem;" id>' +
-    '<img class="card-img-top" v:if="movie.image" v-bind:src="this.apiImg + movie.image" v-bind:alt="movie.titre">' +
+    '<img class="card-img-top" v:if="movie.image" v-bind:src="API_IMG + movie.image" v-bind:alt="movie.titre">' +
     '<div class="card-body">' +
     '<h5 class="card-title">{{ movie.titre }}</h5>' +
     '<p class="card-text">{{ movie.synopsis }}</p>' +
@@ -11,25 +12,27 @@ Vue.component('movie-item', {
     '</div>' +
     "<div class=\"card-footer text-muted\">Sortie :  {{ new Date(movie.date).toLocaleDateString('fr', { year: 'numeric', month: 'long', day: 'numeric' }) }}</div>" +
     '</div></div>'
-})
+});
 
 var app = new Vue({
   el: '#app',
   data: {
-    apiMdb: 'https://api.themoviedb.org/3',
-    apiM2w: 'http://localhost:8000/api',
-    apiImg: 'https://image.tmdb.org/t/p/w500/',
+    apiImg: API_IMG,
     message: 'Movies2Watch',
     search: '',
     movies: [],
     results: []
   },
   methods: {
+    /**
+     * Permet d'ajouter un film dans la liste
+     * @param {*} e 
+     */
     addMovie: function (e) {
       let idMovie = e.target.id;
       axios({
         method: 'get',
-        url: this.apiMdb + '/movie/' + idMovie,
+        url: API_MDB + '/movie/' + idMovie,
         params: {
           language: 'fr',
           api_key: '7afd664dc7f4ac326fb4da1f35ecbb8e'
@@ -37,11 +40,10 @@ var app = new Vue({
       }).then(response => {
         let data = response.data;
         if (data) {
-          console.log(data);          
           m = new Movie(data.title, data.release_date, data.overview, data.poster_path);
           axios({
             method: 'post',
-            url: 'http://localhost:8000/api/movies',
+            url: API_M2W + '/movies',
             data: {
               "titre": m.titre,
               "dateSortie": m.date,
@@ -56,12 +58,16 @@ var app = new Vue({
         }
       });
     },
+    /**
+     * Permet de rechercher un film dans l'API de TMDB
+     * @param {*} e 
+     */
     searchMovie(e) {
       let query = e.target.value;
       if (query.length >= 2) {
         axios({
           method: 'get',
-          url: this.apiMdb + '/search/movie',
+          url: API_MDB + '/search/movie',
           params: {
             query: query,
             language: 'fr',
@@ -75,15 +81,18 @@ var app = new Vue({
         });
       }
     },
+    /**
+     * Permet de récupérer les films de notre liste
+     * @param {*} e 
+     */
     recupererMovies() {
       axios
-      .get(this.apiM2w + '/movies')
+      .get(API_M2W + '/movies')
       .then(response => {        
         if (response.status == 200) {
           let data = response.data;
           let results = data['hydra:member'];
           results.forEach(element => {
-            console.log(element);
             this.movies.push({
               id: element.id,
               titre: element.titre,
@@ -101,12 +110,3 @@ var app = new Vue({
     this.recupererMovies()
   }
 })
-
-class Movie {
-  constructor(titre, date, description, image) {
-    this.titre = titre;
-    this.date = date;
-    this.description = description;
-    this.image = image;
-  }
-}
