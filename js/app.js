@@ -35,25 +35,25 @@ var app = new Vue({
         url: API_MDB + '/movie/' + idMovie,
         params: {
           language: 'fr',
-          api_key: '7afd664dc7f4ac326fb4da1f35ecbb8e'
+          api_key: TOKEN_TMDB
         }
       }).then(response => {
-        let data = response.data;
-        if (data) {
-          m = new Movie(data.title, data.release_date, data.overview, data.poster_path);
+        let movie = response.data;
+        if (movie) {
           axios({
             method: 'post',
             url: API_M2W + '/movies',
             data: {
-              "titre": m.titre,
-              "dateSortie": m.date,
-              "synopsis": m.description.slice(0, 300)+'...',
-              "realisateur": "string",
+              "titre": movie.title,
+              "dateSortie": movie.release_date,
+              "synopsis": movie.overview.slice(0, 300)+'...',
               "note": 0,
               "vue": false,
-              "image": m.image
+              "image": movie.poster_path,
+              "idTmdb": movie.id
             }
           });
+          this.results = [];
           this.recupererMovies();
         }
       });
@@ -71,7 +71,7 @@ var app = new Vue({
           params: {
             query: query,
             language: 'fr',
-            api_key: '7afd664dc7f4ac326fb4da1f35ecbb8e'
+            api_key: TOKEN_TMDB
           }
         }).then(response => {
           let data = response.data;
@@ -87,7 +87,11 @@ var app = new Vue({
      */
     recupererMovies() {
       axios
-      .get(API_M2W + '/movies')
+      .get(API_M2W + '/movies', {
+        headers: {
+          "Access-Control-Allow-Origin": "*"
+        }
+      })
       .then(response => {        
         if (response.status == 200) {
           let data = response.data;
